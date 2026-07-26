@@ -113,6 +113,17 @@ $damageRanges = [
     '50k_500k'  => ['label' => '50 000–500 000 ₽',    'amount' => 275000],
     'over_500k' => ['label' => 'более 500 000 ₽',     'amount' => 500000],
 ];
+// Категория (только для типа "Жалоба") -> название метки/тега в Concord.
+// Concord сам создаёт тег по имени при первом использовании (проверено).
+$categoryLabels = [
+    'utilities'      => 'Бытовые соседские',
+    'utility'        => 'ЖКХ и УК',
+    'legal'          => 'Юридические (мелкие)',
+    'social'         => 'Социальные (угрозы, травля)',
+    'medical'        => 'Медицина',
+    'infrastructure' => 'Городская инфраструктура',
+    'unverified'     => 'Непроверенные сигналы',
+];
 
 $typeLabel = $typeLabels[$type] ?? 'Обращение';
 $dealName = sprintf(
@@ -186,7 +197,7 @@ if (!$anonymous && $phone !== '') {
 // ВАЖНО: ресурс Deal в API Concord НЕ поддерживает поле "description"
 // (подтверждено: его нет ни в create-, ни в retrieve-ответе, и оно не
 // входит в список допустимых search_fields). Полное описание жалобы
-// кладём отдельной Note, привязанной к сделке, сразу после её создания.
+// прикрепляем отдельной Activity сразу после создания сделки (см. ниже).
 $dealPayload = [
     'name'     => $dealName,
     'stage_id' => $pipelineStageId,
@@ -199,6 +210,11 @@ if (!empty($config['default_user_id'])) {
 }
 if ($contactId !== null) {
     $dealPayload['contacts'] = [$contactId];
+}
+if ($type === 'complaint' && $category !== '' && isset($categoryLabels[$category])) {
+    // Тег ставится по категории жалобы. Concord автоматически создаёт
+    // тег с таким именем, если он ещё не существовал.
+    $dealPayload['tags'] = [$categoryLabels[$category]];
 }
 
 $dealResult = crmRequest($crmBaseUrl, $crmToken, 'POST', '/api/deals', $dealPayload);
