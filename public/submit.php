@@ -211,11 +211,14 @@ if (!empty($config['default_user_id'])) {
 if ($contactId !== null) {
     $dealPayload['contacts'] = [$contactId];
 }
+// Тег по типу обращения ставится всегда (Жалоба/Новость/Благодарность/...),
+// плюс отдельный тег по категории — только для жалоб, если категория указана.
+// Concord автоматически создаёт тег с таким именем, если он ещё не существовал.
+$dealTags = [$typeLabel];
 if ($type === 'complaint' && $category !== '' && isset($categoryLabels[$category])) {
-    // Тег ставится по категории жалобы. Concord автоматически создаёт
-    // тег с таким именем, если он ещё не существовал.
-    $dealPayload['tags'] = [$categoryLabels[$category]];
+    $dealTags[] = $categoryLabels[$category];
 }
+$dealPayload['tags'] = $dealTags;
 
 $dealResult = crmRequest($crmBaseUrl, $crmToken, 'POST', '/api/deals', $dealPayload);
 
