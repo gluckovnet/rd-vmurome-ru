@@ -255,7 +255,7 @@ $skippedFiles = []; // причины пропуска (слишком боль�
 if ($dealId !== null && !empty($_FILES['files']['name']) && is_array($_FILES['files']['name'])) {
     $maxFiles = 21;
     $allowedExt = ['jpg', 'jpeg', 'png', 'gif', 'webp', 'heic', 'mp4', 'mov', 'webm', '3gp'];
-    $maxFileSize = 99 * 1024 * 1024; // 99 МБ на файл (согласовано с лимитом nginx/PHP на сервере)
+    $maxFileSize = 999 * 1024 * 1024; // 999 МБ на файл (согласовано с лимитом nginx/PHP на сервере)
 
     // Структура: uploads/{год}/{месяц}/{deal_id}/ — по дате ЛЕГКО найти
     // все жалобы за период, а по deal_id — все файлы конкретной сделки.
@@ -291,7 +291,7 @@ if ($dealId !== null && !empty($_FILES['files']['name']) && is_array($_FILES['fi
             continue;
         }
         if ($size > $maxFileSize) {
-            $skippedFiles[] = $origName . ' (файл больше 99 МБ)';
+            $skippedFiles[] = $origName . ' (файл больше 999 МБ)';
             continue;
         }
 

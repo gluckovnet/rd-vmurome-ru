@@ -254,7 +254,7 @@ body {
         <option value="complaint">Жалоба / проблема</option>
         <option value="news">Новость / позитив (праздник, красивое место)</option>
         <option value="thanks">Благодарность (человеку, организации)</option>
-        <option value="job">Резюме / предложить своё рабочее место</option>
+        <option value="job">Резюме / предложить своё рабочее время</option>
         <option value="other">Другое (инициатива, сотрудничество)</option>
       </select>
     </div>
@@ -433,7 +433,7 @@ function updatePreviews() {
   });
 }
 
-var MAX_FILE_SIZE = 99 * 1024 * 1024; // 99 МБ — согласовано с лимитом сервера
+var MAX_FILE_SIZE = 999 * 1024 * 1024; // 999 МБ — согласовано с лимитом сервера
 
 cameraInput.addEventListener('change', function() {
   var incoming = Array.from(cameraInput.files || []);
@@ -443,7 +443,7 @@ cameraInput.addEventListener('change', function() {
   var okFiles = incoming.filter(function(f) { return f.size <= MAX_FILE_SIZE; });
 
   if (tooBig.length > 0) {
-    showToast('Файл слишком большой (макс. 99 МБ): ' + tooBig.map(function(f) { return f.name; }).join(', '), 'error');
+    showToast('Файл слишком большой (макс. 999 МБ): ' + tooBig.map(function(f) { return f.name; }).join(', '), 'error');
   }
 
   files = files.concat(okFiles.slice(0, remaining));
@@ -747,7 +747,7 @@ submitBtn.addEventListener('click', function() {
     submitText.style.display = '';
     submitSpinner.classList.remove('active');
     submitBtn.disabled = false;
-    showToast('Ошибка отправки. Возможно, файл слишком большой (макс. 99 МБ). Попробуйте ещё раз.', 'error');
+    showToast('Ошибка отправки. Возможно, файл слишком большой (макс. 999 МБ). Попробуйте ещё раз.', 'error');
   });
 });
 
