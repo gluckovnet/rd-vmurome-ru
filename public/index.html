@@ -308,7 +308,7 @@ body {
     </div>
 
     <div class="previews" id="previews"></div>
-    <div class="file-counter hidden" id="file-counter">0/20</div>
+    <div class="file-counter hidden" id="file-counter">0/21</div>
 
     <div class="field">
       <label for="email">Email (необязательно)</label>
@@ -454,7 +454,7 @@ function updatePreviews() {
   });
   if (files.length > 0) {
     fileCounter.classList.remove('hidden');
-    fileCounter.textContent = files.length + '/20';
+    fileCounter.textContent = files.length + '/21';
   } else {
     fileCounter.classList.add('hidden');
   }
@@ -471,7 +471,7 @@ var MAX_FILE_SIZE = 999 * 1024 * 1024; // 999 МБ — подтверждено 
 
 cameraInput.addEventListener('change', function() {
   var incoming = Array.from(cameraInput.files || []);
-  var remaining = 20 - files.length;
+  var remaining = 21 - files.length;
 
   var tooBig = incoming.filter(function(f) { return f.size > MAX_FILE_SIZE; });
   var okFiles = incoming.filter(function(f) { return f.size <= MAX_FILE_SIZE; });

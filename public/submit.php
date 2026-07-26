@@ -253,7 +253,7 @@ $dealId = $dealResult['body']['id'] ?? null;
 $uploadedFileUrls = [];
 $skippedFiles = []; // причины пропуска (слишком большой / неверный тип), для честного ответа пользователю
 if ($dealId !== null && !empty($_FILES['files']['name']) && is_array($_FILES['files']['name'])) {
-    $maxFiles = 20; // ограничение сервера max_file_uploads = 20, больше PHP не примет
+    $maxFiles = 21;
     $allowedExt = ['jpg', 'jpeg', 'png', 'gif', 'webp', 'heic', 'mp4', 'mov', 'webm', '3gp'];
     $maxFileSize = 999 * 1024 * 1024; // 999 МБ — подтверждено на сервере (upload_max_filesize/post_max_size)
 
