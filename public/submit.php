@@ -222,7 +222,10 @@ if ($dealId !== null && !empty($_FILES['files']['name']) && is_array($_FILES['fi
     $allowedExt = ['jpg', 'jpeg', 'png', 'gif', 'webp', 'heic', 'mp4', 'mov', 'webm', '3gp'];
     $maxFileSize = 50 * 1024 * 1024; // 50 МБ на файл
 
-    $uploadDirFs = __DIR__ . '/uploads/' . $dealId;
+    // Структура: uploads/{год}/{месяц}/{deal_id}/ — по дате ЛЕГКО найти
+    // все жалобы за период, а по deal_id — все файлы конкретной сделки.
+    $uploadSubPath = date('Y/m') . '/' . $dealId;
+    $uploadDirFs = __DIR__ . '/uploads/' . $uploadSubPath;
     if (!is_dir($uploadDirFs)) {
         mkdir($uploadDirFs, 0755, true);
     }
@@ -231,7 +234,7 @@ if ($dealId !== null && !empty($_FILES['files']['name']) && is_array($_FILES['fi
     // поэтому жёстко используем https независимо от $_SERVER['HTTPS']
     // (за прокси этот флаг не всегда доходит до PHP-FPM).
     $host = $_SERVER['HTTP_HOST'] ?? 'rd.vmurome.ru';
-    $publicBaseUrl = 'https://' . $host . '/uploads/' . $dealId;
+    $publicBaseUrl = 'https://' . $host . '/uploads/' . $uploadSubPath;
 
     $fileCount = count($_FILES['files']['name']);
     for ($i = 0; $i < $fileCount && count($uploadedFileUrls) < $maxFiles; $i++) {
