@@ -193,6 +193,12 @@ if ($email !== '') {
         $created = crmRequest($crmBaseUrl, $crmToken, 'POST', '/api/contacts', $contactPayload);
         if ($created !== null && $created['status'] >= 200 && $created['status'] < 300) {
             $contactId = $created['body']['id'] ?? null;
+        } elseif ($created !== null && $created['status'] === 422 && stripos($created['raw'], 'email') !== false) {
+            // Email уже привязан к контакту/пользователю, недоступному этому
+            // токену по правам видимости Concord (контакт принадлежит другому
+            // сотруднику). Это НЕ ошибка нашего кода — просто у токена нет
+            // доступа к этой записи, поэтому используем сделку без контакта.
+            error_log('rd.vmurome.ru submit.php: email ' . $email . ' already belongs to a contact not visible to this token, deal created without contact link');
         } else {
             error_log('rd.vmurome.ru submit.php: contact creation failed: ' . ($created['raw'] ?? 'no response'));
         }
