@@ -308,7 +308,7 @@ body {
     </div>
 
     <div class="previews" id="previews"></div>
-    <div class="file-counter hidden" id="file-counter">0/21</div>
+    <div class="file-counter hidden" id="file-counter">0/20</div>
 
     <div class="field">
       <label for="email">Email (необязательно)</label>
@@ -454,7 +454,7 @@ function updatePreviews() {
   });
   if (files.length > 0) {
     fileCounter.classList.remove('hidden');
-    fileCounter.textContent = files.length + '/21';
+    fileCounter.textContent = files.length + '/20';
   } else {
     fileCounter.classList.add('hidden');
   }
@@ -467,17 +467,17 @@ function updatePreviews() {
   });
 }
 
-var MAX_FILE_SIZE = 95 * 1024 * 1024; // 95 МБ — фактический лимит сервера сейчас ~100 МБ (POST Content-Length)
+var MAX_FILE_SIZE = 999 * 1024 * 1024; // 999 МБ — подтверждено на сервере (upload_max_filesize/post_max_size)
 
 cameraInput.addEventListener('change', function() {
   var incoming = Array.from(cameraInput.files || []);
-  var remaining = 21 - files.length;
+  var remaining = 20 - files.length;
 
   var tooBig = incoming.filter(function(f) { return f.size > MAX_FILE_SIZE; });
   var okFiles = incoming.filter(function(f) { return f.size <= MAX_FILE_SIZE; });
 
   if (tooBig.length > 0) {
-    showToast('Файл слишком большой (сервер принимает до ~95 МБ): ' + tooBig.map(function(f) { return f.name; }).join(', '), 'error');
+    showToast('Файл слишком большой (макс. 999 МБ): ' + tooBig.map(function(f) { return f.name; }).join(', '), 'error');
   }
 
   files = files.concat(okFiles.slice(0, remaining));
@@ -782,19 +782,32 @@ submitBtn.addEventListener('click', function() {
     formData.append('files[]', f);
   });
 
+  // Таймаут отправки: чтобы экран "Отправляем обращение…" никогда не висел
+  // бесконечно, даже если сервер/сеть зависли без ответа.
+  var abortController = new AbortController();
+  var abortTimeout = setTimeout(function() {
+    abortController.abort();
+  }, 5 * 60 * 1000); // 5 минут — с запасом для крупных видео
+
+  function finishSubmit() {
+    clearTimeout(abortTimeout);
+    submitText.style.display = '';
+    submitSpinner.classList.remove('active');
+    submitBtn.disabled = false;
+    uploadOverlay.classList.add('hidden');
+  }
+
   fetch(API_URL, {
     method: 'POST',
-    body: formData
+    body: formData,
+    signal: abortController.signal
   })
   .then(function(res) {
     if (!res.ok) throw new Error('HTTP ' + res.status);
     return res.json();
   })
   .then(function(data) {
-    submitText.style.display = '';
-    submitSpinner.classList.remove('active');
-    submitBtn.disabled = false;
-    uploadOverlay.classList.add('hidden');
+    finishSubmit();
 
     var ticketUrl = data && data.url ? data.url : null;
     showThankYou(registerCheck.checked, ticketUrl, data && data.deal_id);
@@ -808,11 +821,12 @@ submitBtn.addEventListener('click', function() {
     }
   })
   .catch(function(err) {
-    submitText.style.display = '';
-    submitSpinner.classList.remove('active');
-    submitBtn.disabled = false;
-    uploadOverlay.classList.add('hidden');
-    showToast('Ошибка отправки. Файл слишком большой для загрузки на сервер (сейчас лимит ~100 МБ). Попробуйте уменьшить видео или прикрепить меньше файлов.', 'error');
+    finishSubmit();
+    if (err.name === 'AbortError') {
+      showToast('Отправка занимает слишком много времени. Проверьте соединение и попробуйте ещё раз.', 'error');
+    } else {
+      showToast('Ошибка отправки. Возможно, файл слишком большой (макс. 999 МБ). Попробуйте ещё раз.', 'error');
+    }
   });
 });
 

@@ -253,9 +253,9 @@ $dealId = $dealResult['body']['id'] ?? null;
 $uploadedFileUrls = [];
 $skippedFiles = []; // причины пропуска (слишком большой / неверный тип), для честного ответа пользователю
 if ($dealId !== null && !empty($_FILES['files']['name']) && is_array($_FILES['files']['name'])) {
-    $maxFiles = 21;
+    $maxFiles = 20; // ограничение сервера max_file_uploads = 20, больше PHP не примет
     $allowedExt = ['jpg', 'jpeg', 'png', 'gif', 'webp', 'heic', 'mp4', 'mov', 'webm', '3gp'];
-    $maxFileSize = 95 * 1024 * 1024; // 95 МБ — фактический лимит сервера сейчас ~100 МБ (post_max_size)
+    $maxFileSize = 999 * 1024 * 1024; // 999 МБ — подтверждено на сервере (upload_max_filesize/post_max_size)
 
     // Структура: uploads/{год}/{месяц}/{deal_id}/ — по дате ЛЕГКО найти
     // все жалобы за период, а по deal_id — все файлы конкретной сделки.
@@ -291,7 +291,7 @@ if ($dealId !== null && !empty($_FILES['files']['name']) && is_array($_FILES['fi
             continue;
         }
         if ($size > $maxFileSize) {
-            $skippedFiles[] = $origName . ' (файл больше 95 МБ)';
+            $skippedFiles[] = $origName . ' (файл больше 999 МБ)';
             continue;
         }
 
