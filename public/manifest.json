@@ -1,0 +1,24 @@
+{
+  "name": "VMUROME — Анонимные жалобы",
+  "short_name": "VMUROME",
+  "description": "Анонимные жалобы и обращения",
+  "start_url": "/",
+  "display": "standalone",
+  "theme_color": "#dc2626",
+  "background_color": "#ffffff",
+  "orientation": "portrait-primary",
+  "icons": [
+    {
+      "src": "/icon-192.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "any maskable"
+    },
+    {
+      "src": "/icon-512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any maskable"
+    }
+  ]
+}

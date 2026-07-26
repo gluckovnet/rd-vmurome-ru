@@ -1,0 +1,13 @@
+{
+  "enabled": true,
+  "name": "Webmaster: сканер задач",
+  "description": "При каждом + показывает новые задачи в tasks/ и reject",
+  "version": "1",
+  "when": {
+    "type": "promptSubmit"
+  },
+  "then": {
+    "type": "runCommand",
+    "command": "/home/webmaster/vs_code/rd.vmurome.ru/.kiro/my-tasks.sh"
+  }
+}

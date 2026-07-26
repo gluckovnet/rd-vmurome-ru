@@ -1,0 +1,577 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+<meta name="theme-color" content="#dc2626">
+<meta name="description" content="Анонимные жалобы">
+<title>rd.vmurome.ru — Анонимные жалобы</title>
+<link rel="manifest" href="/manifest.json">
+<link rel="icon" href="/icon-192.png" sizes="192x192">
+<style>
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+:root {
+  --red: #dc2626;
+  --red-hover: #b91c1c;
+  --gray-50: #fafafa;
+  --gray-100: #f5f5f5;
+  --gray-200: #e5e5e5;
+  --gray-300: #d4d4d4;
+  --gray-400: #a3a3a3;
+  --gray-500: #737373;
+  --gray-700: #404040;
+  --gray-800: #262626;
+  --gray-900: #171717;
+  --radius: 12px;
+}
+
+body {
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+  background: var(--gray-50);
+  color: var(--gray-800);
+  min-height: 100dvh;
+  display: flex;
+  flex-direction: column;
+  -webkit-tap-highlight-color: transparent;
+}
+
+/* Footer */
+/* Footer */
+.footer {
+  padding: 12px 16px 10px;
+  background: #fff;
+  border-top: 1px solid var(--gray-200);
+  display: flex; flex-direction: column; align-items: center; gap: 6px;
+}
+.footer-links {
+  display: flex; align-items: center; justify-content: center; gap: 24px; width: 100%;
+}
+.footer-link {
+  font-size: 16px; font-weight: 700; color: var(--gray-900);
+  text-decoration: none; letter-spacing: 0.5px;
+}
+.footer-link:hover { color: var(--red); }
+
+/* Footer mode indicator */
+.footer-mode {
+  font-size: 11px; color: var(--gray-400); text-align: center;
+}
+
+/* Main */
+.main { flex: 1; display: flex; justify-content: center; padding: 16px; }
+
+.card {
+  width: 100%; max-width: 600px; background: #fff;
+  border-radius: var(--radius); box-shadow: 0 1px 3px rgba(0,0,0,0.08);
+  padding: 24px 20px; display: flex; flex-direction: column; gap: 20px;
+}
+
+/* Textarea */
+.textarea-wrap { display: flex; flex-direction: column; gap: 6px; }
+.textarea-wrap label { font-size: 14px; font-weight: 600; color: var(--gray-700); }
+.textarea-wrap textarea {
+  width: 100%; min-height: 80px; border: 1.5px solid var(--gray-300);
+  border-radius: var(--radius); padding: 12px 14px; font-size: 16px;
+  font-family: inherit; resize: vertical; transition: border-color 0.2s; outline: none;
+}
+.textarea-wrap textarea:focus { border-color: var(--red); }
+
+/* Camera */
+.camera-btn {
+  width: 100%; aspect-ratio: 1 / 1; max-width: 200px; margin: 0 auto;
+  background: var(--gray-100); border: 2px dashed var(--gray-300);
+  border-radius: var(--radius); display: flex; flex-direction: column;
+  align-items: center; justify-content: center; gap: 6px;
+  cursor: pointer; transition: all 0.2s; position: relative; overflow: hidden;
+}
+.camera-btn:hover, .camera-btn:active { border-color: var(--red); background: #fef2f2; }
+.camera-btn svg {
+  width: 52px; height: 52px; color: var(--gray-400); transition: color 0.2s;
+}
+.camera-btn:hover svg { color: var(--red); }
+.camera-btn span { font-size: 13px; color: var(--gray-500); }
+.camera-input { position: absolute; inset: 0; opacity: 0; cursor: pointer; }
+
+/* Previews */
+.previews { display: flex; flex-wrap: wrap; gap: 8px; }
+.preview-item {
+  position: relative; width: 72px; height: 72px; border-radius: 8px;
+  overflow: hidden; border: 1px solid var(--gray-200);
+}
+.preview-item img { width: 100%; height: 100%; object-fit: cover; }
+.preview-item video { width: 100%; height: 100%; object-fit: cover; }
+.preview-item .play-icon {
+  position: absolute; inset: 0; display: flex; align-items: center; justify-content: center;
+  background: rgba(0,0,0,0.25); pointer-events: none;
+}
+.preview-item .play-icon svg { width: 24px; height: 24px; color: #fff; }
+.preview-item .del {
+  position: absolute; top: 2px; right: 2px; width: 22px; height: 22px;
+  background: rgba(0,0,0,0.55); color: #fff; border: none; border-radius: 50%;
+  font-size: 14px; line-height: 1; cursor: pointer;
+  display: flex; align-items: center; justify-content: center; padding: 0;
+}
+.file-counter { font-size: 12px; color: var(--gray-500); align-self: center; margin-left: 4px; }
+
+/* Fields */
+.field { display: flex; flex-direction: column; gap: 6px; }
+.field label { font-size: 14px; font-weight: 600; color: var(--gray-700); }
+.field input[type="email"], .field input[type="tel"], .field input[type="text"] {
+  width: 100%; border: 1.5px solid var(--gray-300); border-radius: var(--radius);
+  padding: 12px 14px; font-size: 16px; font-family: inherit; outline: none;
+  transition: border-color 0.2s;
+}
+.field input:focus { border-color: var(--red); }
+.field input.error { border-color: var(--red); background: #fef2f2; }
+.field-hint { font-size: 12px; color: var(--gray-400); }
+
+/* Checkbox */
+.check-row {
+  display: flex; align-items: flex-start; gap: 10px; cursor: pointer;
+  font-size: 14px; color: var(--gray-700); user-select: none;
+}
+.check-row input[type="checkbox"] {
+  width: 18px; height: 18px; accent-color: var(--red); margin-top: 1px; flex-shrink: 0;
+}
+
+/* Expandable */
+.expandable {
+  overflow: hidden;
+  transition: max-height 0.4s ease, opacity 0.3s ease, margin 0.3s ease;
+}
+.expandable.collapsed { max-height: 0 !important; opacity: 0; margin: 0; }
+.expandable-inner { display: flex; flex-direction: column; gap: 20px; padding-top: 4px; }
+
+/* Submit */
+.submit-btn {
+  width: 100%; padding: 14px; background: var(--red); color: #fff;
+  border: none; border-radius: var(--radius); font-size: 17px; font-weight: 700;
+  cursor: pointer; transition: background 0.2s, opacity 0.2s;
+  display: flex; align-items: center; justify-content: center; gap: 8px;
+}
+.submit-btn:disabled { background: var(--gray-300); cursor: not-allowed; }
+.submit-btn:not(:disabled):hover { background: var(--red-hover); }
+
+/* Spinner */
+.spinner {
+  display: none; width: 22px; height: 22px;
+  border: 3px solid rgba(255,255,255,0.3); border-top-color: #fff;
+  border-radius: 50%; animation: spin 0.6s linear infinite;
+}
+.spinner.active { display: inline-block; }
+@keyframes spin { to { transform: rotate(360deg); } }
+
+/* Overlay / Modal */
+.overlay {
+  position: fixed; inset: 0; background: rgba(0,0,0,0.5);
+  display: flex; align-items: center; justify-content: center;
+  z-index: 100; padding: 16px; opacity: 0; pointer-events: none;
+  transition: opacity 0.3s;
+}
+.overlay.active { opacity: 1; pointer-events: auto; }
+.modal {
+  background: #fff; border-radius: var(--radius); padding: 28px 24px;
+  width: 100%; max-width: 420px; display: flex; flex-direction: column;
+  gap: 16px; box-shadow: 0 10px 40px rgba(0,0,0,0.2);
+}
+.modal h2 { font-size: 20px; color: var(--gray-900); }
+.modal p { font-size: 14px; color: var(--gray-500); line-height: 1.5; }
+.sms-input {
+  width: 100%; border: 1.5px solid var(--gray-300); border-radius: var(--radius);
+  padding: 14px; font-size: 24px; text-align: center; letter-spacing: 8px;
+  font-family: monospace; outline: none; transition: border-color 0.2s;
+}
+.sms-input:focus { border-color: var(--red); }
+.modal-actions { display: flex; gap: 10px; }
+.modal-btn {
+  flex: 1; padding: 12px; border-radius: var(--radius);
+  font-size: 15px; font-weight: 600; cursor: pointer; border: none; transition: all 0.2s;
+}
+.modal-btn.primary { background: var(--red); color: #fff; }
+.modal-btn.primary:disabled { background: var(--gray-300); cursor: not-allowed; }
+.modal-btn.primary:not(:disabled):hover { background: var(--red-hover); }
+.modal-btn.secondary { background: var(--gray-100); color: var(--gray-700); }
+.modal-btn.secondary:hover { background: var(--gray-200); }
+.timer { font-size: 13px; color: var(--gray-400); text-align: center; }
+.resend-btn {
+  background: none; border: none; color: var(--red); font-size: 14px;
+  cursor: pointer; text-decoration: underline;
+}
+.resend-btn:disabled { color: var(--gray-400); cursor: not-allowed; text-decoration: none; }
+
+/* Thank you */
+.thankyou { text-align: center; }
+.thankyou .icon {
+  width: 64px; height: 64px; background: #dcfce7; border-radius: 50%;
+  display: flex; align-items: center; justify-content: center; margin: 0 auto 16px;
+}
+.thankyou .icon svg { width: 32px; height: 32px; color: #16a34a; }
+.thankyou h2 { font-size: 22px; color: var(--gray-900); margin-bottom: 8px; }
+.thankyou .msg { font-size: 14px; color: var(--gray-500); margin-bottom: 8px; line-height: 1.5; }
+.thankyou .link { font-size: 14px; color: var(--red); word-break: break-all; }
+.thankyou .back-btn {
+  margin-top: 20px; padding: 12px 28px;
+  background: var(--gray-100); border: 1px solid var(--gray-300);
+  border-radius: var(--radius); font-size: 15px; cursor: pointer; transition: all 0.2s;
+}
+.thankyou .back-btn:hover { background: var(--gray-200); }
+
+.hidden { display: none !important; }
+
+/* Toast */
+.toast {
+  position: fixed; bottom: 20px; left: 50%; transform: translateX(-50%);
+  padding: 12px 24px; border-radius: var(--radius); font-size: 14px; font-weight: 600;
+  color: #fff; z-index: 200; opacity: 0; transition: opacity 0.3s;
+  pointer-events: none; max-width: 90vw; text-align: center;
+}
+.toast.show { opacity: 1; pointer-events: auto; }
+.toast.success { background: #16a34a; }
+.toast.error { background: var(--red); }
+</style>
+</head>
+<body>
+
+<!-- STATE 1: FORM -->
+<main class="main" id="form-view">
+  <div class="card" id="card">
+
+    <div class="textarea-wrap">
+      <label for="issue">Опишите ситуацию</label>
+      <textarea id="issue" placeholder="Яма на Ленина, 5" maxlength="2000"></textarea>
+    </div>
+
+    <div class="camera-btn" id="camera-btn">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"/><circle cx="12" cy="13" r="4"/></svg>
+      <span>Прикрепить фото/видео</span>
+      <input type="file" class="camera-input" id="camera-input" accept="image/*,video/*" capture="environment" multiple>
+    </div>
+
+    <div class="previews" id="previews"></div>
+    <div class="file-counter hidden" id="file-counter">0/5</div>
+
+    <div class="field">
+      <label for="email">Email <span style="color:var(--red)">*</span></label>      
+      <input type="email" id="email" placeholder="you@example.com" required>
+
+    </div>
+
+    <label class="check-row">
+      <input type="checkbox" id="consent">
+      <span>Согласен на обработку персональных данных и принимаю условия <a href="https://vmurome.ru/privacy" target="_blank" rel="noopener" style="color:var(--red)">политики конфиденциальности</a></span>
+    </label>
+
+    <label class="check-row">
+      <input type="checkbox" id="register-radar">
+      <span>Хочу указать свои данные и создать тему на rd.vmurome.ru</span>
+    </label>
+
+    <div class="expandable collapsed" id="expandable-register">
+      <div class="expandable-inner">
+        <div class="field">
+          <label for="category-select">Категория</label>
+          <select id="category-select" style="width:100%;border:1.5px solid var(--gray-300);border-radius:var(--radius);padding:12px 14px;font-size:16px;font-family:inherit;outline:none;background:#fff">
+            <option value="">Выберите категорию</option>
+            <option value="utilities">Бытовые соседские</option>
+            <option value="utility">ЖКХ и УК</option>
+            <option value="legal">Юридические (мелкие)</option>
+            <option value="social">Социальные (угрозы, травля)</option>
+            <option value="medical">Медицина (запись к врачу, льготы, отказы, скорая)</option>
+            <option value="infrastructure">Городская инфраструктура</option>
+            <option value="unverified">Непроверенные сигналы (инициативы)</option>
+          </select>
+        </div>
+        <div class="field">
+          <label for="phone">Телефон</label>
+          <input type="tel" id="phone" placeholder="+7 (999) 999-99-99" maxlength="18">
+        </div>
+        <div class="field">
+          <label for="name">Имя</label>
+          <input type="text" id="name" placeholder="Ваше имя">
+        </div>
+      </div>
+    </div>
+
+    <button class="submit-btn" id="submit-btn" disabled>
+      <span id="submit-text">Отправить анонимно</span>
+      <div class="spinner" id="submit-spinner"></div>
+    </button>
+
+  </div>
+</main>
+
+<!-- FOOTER -->
+<footer class="footer">
+  <div class="footer-links">
+    <a href="https://rd.vmurome.ru" class="footer-link" target="_blank" rel="noopener">rd.vmurome.ru</a>
+    <a href="/" class="footer-link">rd.vmurome.ru</a>
+    <a href="https://rk.vmurome.ru" class="footer-link" target="_blank" rel="noopener">rk.vmurome.ru</a>
+  </div>
+  <div class="footer-mode" id="footer-mode">Анонимно</div>
+</footer>
+
+<!-- STATE 3: THANK YOU -->
+<main class="main hidden" id="thank-view">
+  <div class="card thankyou">
+    <div class="icon">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="20 6 9 17 4 12"/></svg>
+    </div>
+    <h2>Готово!</h2>
+    <div class="msg" id="thank-msg"></div>
+    <div class="link hidden" id="thank-link"></div>
+    <button class="back-btn" id="back-btn">Вернуться на главную</button>
+  </div>
+</main>
+
+<script>
+'use strict';
+
+const formView = document.getElementById('form-view');
+const thankView = document.getElementById('thank-view');
+const issueEl = document.getElementById('issue');
+const cameraInput = document.getElementById('camera-input');
+const previewsEl = document.getElementById('previews');
+const fileCounter = document.getElementById('file-counter');
+const emailEl = document.getElementById('email');
+const consentEl = document.getElementById('consent');
+const phoneEl = document.getElementById('phone');
+const registerCheck = document.getElementById('register-radar');
+const nameEl = document.getElementById('name');
+const submitBtn = document.getElementById('submit-btn');
+const submitText = document.getElementById('submit-text');
+const submitSpinner = document.getElementById('submit-spinner');
+
+const footerMode = document.getElementById('footer-mode');
+const thankMsg = document.getElementById('thank-msg');
+const thankLink = document.getElementById('thank-link');
+
+const expRegister = document.getElementById('expandable-register');
+
+// File handling
+let files = [];
+
+function updatePreviews() {
+  previewsEl.innerHTML = '';
+  files.forEach((f, i) => {
+    const isVideo = f.type.startsWith('video/');
+    const url = URL.createObjectURL(f);
+    const div = document.createElement('div');
+    div.className = 'preview-item';
+    if (isVideo) {
+      div.innerHTML = '<video src="' + url + '" muted></video><div class="play-icon"><svg viewBox="0 0 24 24" fill="currentColor"><polygon points="8,5 19,12 8,19"/></svg></div><button class="del" data-idx="' + i + '">&times;</button>';
+    } else {
+      div.innerHTML = '<img src="' + url + '" alt="preview"><button class="del" data-idx="' + i + '">&times;</button>';
+    }
+    previewsEl.appendChild(div);
+  });
+  if (files.length > 0) {
+    fileCounter.classList.remove('hidden');
+    fileCounter.textContent = files.length + '/5';
+  } else {
+    fileCounter.classList.add('hidden');
+  }
+  previewsEl.querySelectorAll('.del').forEach(function(btn) {
+    btn.addEventListener('click', function() {
+      var idx = parseInt(btn.dataset.idx);
+      files.splice(idx, 1);
+      updatePreviews();
+    });
+  });
+}
+
+cameraInput.addEventListener('change', function() {
+  var incoming = Array.from(cameraInput.files || []);
+  var remaining = 5 - files.length;
+  files = files.concat(incoming.slice(0, remaining));
+  cameraInput.value = '';
+  updatePreviews();
+});
+
+// Phone mask (no expandable trigger)
+phoneEl.addEventListener('input', function() {
+  var val = phoneEl.value.replace(/\D/g, '');
+  if (val.length === 0) { phoneEl.value = ''; updateExpandables(); return; }
+  if (val[0] !== '7') val = '7' + val.replace(/^[78]/, '');
+  val = val.slice(0, 11);
+  var formatted = '+7';
+  if (val.length > 1) formatted += ' (' + val.slice(1, Math.min(4, val.length));
+  if (val.length >= 5) formatted += ') ' + val.slice(4, Math.min(7, val.length));
+  if (val.length >= 8) formatted += '-' + val.slice(7, Math.min(9, val.length));
+  if (val.length >= 10) formatted += '-' + val.slice(9, Math.min(11, val.length));
+  phoneEl.value = formatted;
+});
+
+// Expandables: register checkbox → phone + name + categories
+function updateExpandables() {
+  if (registerCheck.checked) {
+    expRegister.classList.remove('collapsed');
+    expRegister.style.maxHeight = expRegister.scrollHeight + 'px';
+    footerMode.textContent = 'Режим регистрации';
+    submitText.textContent = 'Создать тему на Радаре';
+  } else {
+    expRegister.classList.add('collapsed');
+    expRegister.style.maxHeight = '0px';
+    phoneEl.value = '';
+    nameEl.value = '';
+    footerMode.textContent = 'Анонимно';
+    submitText.textContent = 'Отправить анонимно';
+  }
+  updateSubmitState();
+}
+
+registerCheck.addEventListener('change', updateExpandables);
+
+// Submit state
+function updateSubmitState() {
+  var emailOk = emailEl.value.indexOf('@') > -1 && emailEl.value.indexOf('.') > -1;
+  submitBtn.disabled = !(emailOk && consentEl.checked);
+}
+
+emailEl.addEventListener('input', function() {
+  updateSubmitState();
+  if (emailEl.value && !(emailEl.value.indexOf('@') > -1 && emailEl.value.indexOf('.') > -1)) {
+    emailEl.classList.add('error');
+  } else {
+    emailEl.classList.remove('error');
+  }
+});
+
+consentEl.addEventListener('change', updateSubmitState);
+
+function validateEmail() {
+  var ok = emailEl.value.indexOf('@') > -1 && emailEl.value.indexOf('.') > -1;
+  if (!emailEl.value || !ok) {
+    emailEl.classList.add('error');
+    return false;
+  }
+  emailEl.classList.remove('error');
+  return true;
+}
+
+// Toast
+function showToast(text, type) {
+  var toast = document.getElementById('toast');
+  if (!toast) {
+    toast = document.createElement('div');
+    toast.id = 'toast';
+    toast.className = 'toast';
+    document.body.appendChild(toast);
+  }
+  toast.textContent = text;
+  toast.className = 'toast ' + type + ' show';
+  clearTimeout(toast._timeout);
+  toast._timeout = setTimeout(function() {
+    toast.classList.remove('show');
+  }, 4000);
+}
+
+// Thank you
+function showThankYou(registered, ticketUrl) {
+  formView.classList.add('hidden');
+  thankView.classList.remove('hidden');
+  window.scrollTo(0, 0);
+
+  if (registered) {
+    thankMsg.textContent = 'Тема создана! Ваше обращение зарегистрировано на Радаре.';
+    if (ticketUrl) {
+      thankLink.classList.remove('hidden');
+      thankLink.innerHTML = 'Ссылка на тему: <a href="' + ticketUrl + '" style="color:var(--red)">' + ticketUrl + '</a>';
+    } else {
+      thankLink.classList.add('hidden');
+    }
+  } else {
+    thankMsg.textContent = 'Жалоба отправлена анонимно. Ответ придёт на указанную почту.';
+    thankLink.classList.add('hidden');
+  }
+}
+
+// Back button
+document.getElementById('back-btn').addEventListener('click', resetForm);
+
+function resetForm() {
+  issueEl.value = '';
+  files = [];
+  updatePreviews();
+  emailEl.value = '';
+  emailEl.classList.remove('error');
+  consentEl.checked = false;
+  phoneEl.value = '';
+  registerCheck.checked = false;
+  nameEl.value = '';
+
+  [expRegister].forEach(function(el) {
+    el.classList.add('collapsed');
+    el.style.maxHeight = '0px';
+  });
+
+  footerMode.textContent = 'Анонимно';
+  submitText.textContent = 'Отправить анонимно';
+  updateSubmitState();
+  thankView.classList.add('hidden');
+  formView.classList.remove('hidden');
+  window.scrollTo(0, 0);
+}
+
+// CRM API endpoint
+var API_URL = '/api/complaints';
+
+// Submit flow
+submitBtn.addEventListener('click', function() {
+  if (!validateEmail()) return;
+  if (!consentEl.checked) return;
+
+  submitText.style.display = 'none';
+  submitSpinner.classList.add('active');
+  submitBtn.disabled = true;
+
+  var formData = new FormData();
+  formData.append('issue', issueEl.value);
+  formData.append('email', emailEl.value);
+  formData.append('anonymous', !registerCheck.checked);
+
+  if (registerCheck.checked) {
+    var categoryEl = document.getElementById('category-select');
+    formData.append('category', categoryEl.value);
+    formData.append('phone', phoneEl.value.replace(/\D/g, ''));
+    formData.append('name', nameEl.value);
+  }
+
+  files.forEach(function(f, i) {
+    formData.append('files[' + i + ']', f);
+  });
+
+  fetch(API_URL, {
+    method: 'POST',
+    body: formData
+  })
+  .then(function(res) {
+    if (!res.ok) throw new Error('HTTP ' + res.status);
+    return res.json();
+  })
+  .then(function(data) {
+    submitText.style.display = '';
+    submitSpinner.classList.remove('active');
+    submitBtn.disabled = false;
+
+    var ticketUrl = data && data.url ? data.url : null;
+    showThankYou(registerCheck.checked, ticketUrl);
+
+    if (registerCheck.checked) {
+      showToast('Тема создана на Радаре', 'success');
+    } else {
+      showToast('Жалоба отправлена анонимно', 'success');
+    }
+  })
+  .catch(function(err) {
+    submitText.style.display = '';
+    submitSpinner.classList.remove('active');
+    submitBtn.disabled = false;
+    showToast('Ошибка отправки: ' + err.message, 'error');
+  });
+});
+
+updateSubmitState();
+</script>
+</body>
+</html>
