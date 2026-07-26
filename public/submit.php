@@ -1,7 +1,8 @@
 <?php
 /**
  * submit.php — принимает данные формы rd.vmurome.ru и создаёт сделку
- * (+ контакт, если указан телефон) в Concord CRM (cp.murom360.ru) через API.
+ * (+ контакт по email, + заметку с полным текстом) в Concord CRM
+ * (cp.murom360.ru) через API.
  *
  * ВАЖНО: файл конфига с API-токеном лежит ВНЕ веб-корня
  * (../../rd-vmurome-secrets/config.php относительно этого файла),
@@ -165,12 +166,15 @@ if ($medicalConsent) {
 $descriptionLines[] = '';
 $descriptionLines[] = 'Источник: rd.vmurome.ru';
 
-// --- Контакт: ищем по телефону, создаём если не найден (только для не-анонимных с телефоном) ---
+// --- Контакт: ищем по email, создаём если не найден. ---
+// Email обязателен в форме, значит контакт создаётся практически всегда
+// (единственный случай пропуска — если email по какой-то причине пуст,
+// что не должно происходить при штатной валидации на фронте).
 $contactId = null;
-if (!$anonymous && $phone !== '') {
+if ($email !== '') {
     $search = crmRequest(
         $crmBaseUrl, $crmToken, 'GET',
-        '/api/contacts?q=' . urlencode($phone) . '&search_fields=' . urlencode('phones.number:=') . '&per_page=1'
+        '/api/contacts?q=' . urlencode($email) . '&search_fields=' . urlencode('email:=') . '&per_page=1'
     );
 
     if ($search !== null && $search['status'] === 200 && !empty($search['body']['data'])) {
@@ -179,8 +183,10 @@ if (!$anonymous && $phone !== '') {
         $contactPayload = [
             'first_name' => $name !== '' ? $name : 'Без имени',
             'email'      => $email,
-            'phones'     => [['number' => $phoneRaw, 'type' => 'mobile']],
         ];
+        if ($phoneRaw !== '') {
+            $contactPayload['phones'] = [['number' => $phoneRaw, 'type' => 'mobile']];
+        }
         if (!empty($config['default_user_id'])) {
             $contactPayload['user_id'] = (int)$config['default_user_id'];
         }
@@ -302,26 +308,26 @@ if (!empty($uploadedFileUrls)) {
     }
 }
 
-// --- Прикрепляем полное описание (+ ссылки на файлы) через Activity ---
-// ВАЖНО: привязка заметки (Note) к сделке через via_resource/via_resource_id
-// оказалась НЕНАДЁЖНОЙ — сделка не всегда получала associations_count > 0
-// (проверено на нескольких реальных сделках). Ресурс Activity с явным
-// массивом deals: [id] при создании привязывается гарантированно
-// (подтверждено многократно), поэтому используем его вместо Note.
+// --- Прикрепляем полное описание (+ ссылки на файлы) как заметку к сделке ---
+// ВАЖНО: одного via_resource/via_resource_id для привязки НЕДОСТАТОЧНО —
+// в API Concord это ненадёжно (привязка иногда не сохранялась). Надёжно
+// работает связка via_resource + via_resource_id ВМЕСТЕ с явным массивом
+// deals: [id] — так же, как для Activity. Проверено на живых сделках.
+// Заметки выбраны вместо задач (Activity), т.к. владелец не хочет создавать
+// лишние сущности, которые потом нужно закрывать/вести как задачи.
 if ($dealId !== null) {
-    $activityPayload = [
-        'title'       => 'Обращение с сайта rd.vmurome.ru',
-        'user_id'     => (int)($config['default_user_id'] ?? 5),
-        'due_date'    => date('Y-m-d'),
-        'description' => implode('<br>', $descriptionHtmlLines),
-        'deals'       => [$dealId],
+    $notePayload = [
+        'body'            => implode('<br>', $descriptionHtmlLines),
+        'via_resource'    => 'deals',
+        'via_resource_id' => $dealId,
+        'deals'           => [$dealId],
     ];
     if ($contactId !== null) {
-        $activityPayload['contacts'] = [$contactId];
+        $notePayload['contacts'] = [$contactId];
     }
-    $activityResult = crmRequest($crmBaseUrl, $crmToken, 'POST', '/api/activities', $activityPayload);
-    if ($activityResult === null || $activityResult['status'] < 200 || $activityResult['status'] >= 300) {
-        error_log('rd.vmurome.ru submit.php: activity creation failed for deal ' . $dealId . ': ' . ($activityResult['raw'] ?? 'no response'));
+    $noteResult = crmRequest($crmBaseUrl, $crmToken, 'POST', '/api/notes', $notePayload);
+    if ($noteResult === null || $noteResult['status'] < 200 || $noteResult['status'] >= 300) {
+        error_log('rd.vmurome.ru submit.php: note creation failed for deal ' . $dealId . ': ' . ($noteResult['raw'] ?? 'no response'));
         // не блокируем ответ пользователю — сделка уже создана
     }
 }
