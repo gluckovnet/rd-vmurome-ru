@@ -95,7 +95,8 @@ $medicalConsent = ($_POST['medical_consent'] ?? 'false') === 'true';
 if ($issue === '') {
     respond(422, ['error' => 'Поле "issue" обязательно']);
 }
-if ($email === '' || !filter_var($email, FILTER_VALIDATE_EMAIL)) {
+// Email необязателен. Если указан — должен быть валидным.
+if ($email !== '' && !filter_var($email, FILTER_VALIDATE_EMAIL)) {
     respond(422, ['error' => 'Некорректный email']);
 }
 
@@ -137,7 +138,9 @@ $dealName = sprintf(
 $descriptionLines = [];
 $descriptionLines[] = 'Тип обращения: ' . $typeLabel;
 $descriptionLines[] = 'Текст обращения: ' . $issue;
-$descriptionLines[] = 'Email: ' . $email;
+if ($email !== '') {
+    $descriptionLines[] = 'Email: ' . $email;
+}
 $descriptionLines[] = 'Режим: ' . ($anonymous ? 'Анонимно' : 'С регистрацией');
 
 if (!$anonymous) {
@@ -248,10 +251,11 @@ $dealId = $dealResult['body']['id'] ?? null;
 // Это делается ПОСЛЕ создания сделки, чтобы папка сразу была привязана
 // к конкретному ID и не терялась в общей куче по датам.
 $uploadedFileUrls = [];
+$skippedFiles = []; // причины пропуска (слишком большой / неверный тип), для честного ответа пользователю
 if ($dealId !== null && !empty($_FILES['files']['name']) && is_array($_FILES['files']['name'])) {
     $maxFiles = 21;
     $allowedExt = ['jpg', 'jpeg', 'png', 'gif', 'webp', 'heic', 'mp4', 'mov', 'webm', '3gp'];
-    $maxFileSize = 50 * 1024 * 1024; // 50 МБ на файл
+    $maxFileSize = 99 * 1024 * 1024; // 99 МБ на файл (согласовано с лимитом nginx/PHP на сервере)
 
     // Структура: uploads/{год}/{месяц}/{deal_id}/ — по дате ЛЕГКО найти
     // все жалобы за период, а по deal_id — все файлы конкретной сделки.
@@ -269,20 +273,45 @@ if ($dealId !== null && !empty($_FILES['files']['name']) && is_array($_FILES['fi
 
     $fileCount = count($_FILES['files']['name']);
     for ($i = 0; $i < $fileCount && count($uploadedFileUrls) < $maxFiles; $i++) {
-        if (($_FILES['files']['error'][$i] ?? UPLOAD_ERR_NO_FILE) !== UPLOAD_ERR_OK) {
+        $origName = (string)$_FILES['files']['name'][$i];
+        $uploadErr = $_FILES['files']['error'][$i] ?? UPLOAD_ERR_NO_FILE;
+
+        if ($uploadErr === UPLOAD_ERR_INI_SIZE || $uploadErr === UPLOAD_ERR_FORM_SIZE) {
+            $skippedFiles[] = $origName . ' (превышен лимит размера)';
             continue;
         }
+        if ($uploadErr !== UPLOAD_ERR_OK) {
+            continue; // прочие сбои загрузки (редко, не даём пользователю ложную причину)
+        }
+
         $tmpPath = $_FILES['files']['tmp_name'][$i];
-        $origName = (string)$_FILES['files']['name'][$i];
         $size = (int)($_FILES['files']['size'][$i] ?? 0);
 
-        if ($size <= 0 || $size > $maxFileSize) {
+        if ($size <= 0) {
+            continue;
+        }
+        if ($size > $maxFileSize) {
+            $skippedFiles[] = $origName . ' (файл больше 99 МБ)';
             continue;
         }
 
         $ext = strtolower(pathinfo($origName, PATHINFO_EXTENSION));
         if (!in_array($ext, $allowedExt, true)) {
-            continue; // не тот тип файла — пропускаем молча
+            $skippedFiles[] = $origName . ' (неподдерживаемый тип файла)';
+            continue;
+        }
+
+        // Защита от подмены типа файла: проверяем РЕАЛЬНЫЙ MIME-тип
+        // по содержимому (не по расширению из имени файла, которое легко
+        // подделать — например virus.exe переименованный в photo.jpg).
+        $realMime = mime_content_type($tmpPath);
+        $allowedMimes = [
+            'image/jpeg', 'image/png', 'image/gif', 'image/webp', 'image/heic', 'image/heif',
+            'video/mp4', 'video/quicktime', 'video/webm', 'video/3gpp',
+        ];
+        if ($realMime === false || !in_array($realMime, $allowedMimes, true)) {
+            $skippedFiles[] = $origName . ' (файл не похож на настоящее фото/видео)';
+            continue;
         }
 
         // Имя файла: порядковый номер + короткий случайный суффикс
@@ -339,9 +368,10 @@ if ($dealId !== null) {
 }
 
 respond(200, [
-    'success'    => true,
-    'deal_id'    => $dealId,
-    'contact_id' => $contactId,
-    'files'      => count($uploadedFileUrls),
-    'url'        => null, // Concord не отдаёт публичную ссылку на сделку в API-ответе
+    'success'        => true,
+    'deal_id'        => $dealId,
+    'contact_id'     => $contactId,
+    'files'          => count($uploadedFileUrls),
+    'skipped_files'  => $skippedFiles,
+    'url'            => null, // Concord не отдаёт публичную ссылку на сделку в API-ответе
 ]);

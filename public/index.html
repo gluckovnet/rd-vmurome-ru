@@ -124,6 +124,7 @@ body {
 /* Fields */
 .field { display: flex; flex-direction: column; gap: 6px; }
 .field label { font-size: 14px; font-weight: 600; color: var(--gray-700); }
+.field input:disabled { background: var(--gray-100); color: var(--gray-400); cursor: not-allowed; }
 .field input[type="email"], .field input[type="tel"], .field input[type="text"] {
   width: 100%; border: 1.5px solid var(--gray-300); border-radius: var(--radius);
   padding: 12px 14px; font-size: 16px; font-family: inherit; outline: none;
@@ -228,7 +229,7 @@ body {
 
 /* Toast */
 .toast {
-  position: fixed; bottom: 90px; left: 50%; transform: translateX(-50%);
+  position: fixed; bottom: 110px; left: 50%; transform: translateX(-50%);
   padding: 12px 24px; border-radius: var(--radius); font-size: 14px; font-weight: 600;
   color: #fff; z-index: 200; opacity: 0; transition: opacity 0.3s;
   pointer-events: none; max-width: 90vw; text-align: center;
@@ -285,9 +286,9 @@ body {
     <div class="file-counter hidden" id="file-counter">0/21</div>
 
     <div class="field">
-      <label for="email">Email <span style="color:var(--red)">*</span></label>      
-      <input type="email" id="email" placeholder="you@example.com" required>
-
+      <label for="email">Email (необязательно)</label>
+      <input type="email" id="email" placeholder="you@example.com" disabled>
+      <div class="field-hint" id="email-hint">Доступно после согласия на обработку данных ниже</div>
     </div>
 
     <label class="check-row">
@@ -432,10 +433,20 @@ function updatePreviews() {
   });
 }
 
+var MAX_FILE_SIZE = 99 * 1024 * 1024; // 99 МБ — согласовано с лимитом сервера
+
 cameraInput.addEventListener('change', function() {
   var incoming = Array.from(cameraInput.files || []);
   var remaining = 21 - files.length;
-  files = files.concat(incoming.slice(0, remaining));
+
+  var tooBig = incoming.filter(function(f) { return f.size > MAX_FILE_SIZE; });
+  var okFiles = incoming.filter(function(f) { return f.size <= MAX_FILE_SIZE; });
+
+  if (tooBig.length > 0) {
+    showToast('Файл слишком большой (макс. 99 МБ): ' + tooBig.map(function(f) { return f.name; }).join(', '), 'error');
+  }
+
+  files = files.concat(okFiles.slice(0, remaining));
   cameraInput.value = '';
   updatePreviews();
 });
@@ -554,27 +565,41 @@ function updateMedicalConsent() {
 categorySelectEl.addEventListener('change', updateMedicalConsent);
 medicalConsentEl.addEventListener('change', updateSubmitState);
 
+// Email необязателен. Если пустой — валиден (пропускаем поле).
+// Если что-то введено — должно быть похоже на настоящий email.
+function isEmailValid() {
+  if (!emailEl.value) return true;
+  return emailEl.value.indexOf('@') > -1 && emailEl.value.indexOf('.') > -1;
+}
+
 // Submit state
 function updateSubmitState() {
-  var emailOk = emailEl.value.indexOf('@') > -1 && emailEl.value.indexOf('.') > -1;
   var medicalOk = categorySelectEl.value !== 'medical' || medicalConsentEl.checked;
-  submitBtn.disabled = !(emailOk && consentEl.checked && medicalOk);
+  submitBtn.disabled = !(isEmailValid() && consentEl.checked && medicalOk);
 }
 
 emailEl.addEventListener('input', function() {
   updateSubmitState();
-  if (emailEl.value && !(emailEl.value.indexOf('@') > -1 && emailEl.value.indexOf('.') > -1)) {
+  if (!isEmailValid()) {
     emailEl.classList.add('error');
   } else {
     emailEl.classList.remove('error');
   }
 });
 
-consentEl.addEventListener('change', updateSubmitState);
+// Email разблокируется только после согласия на обработку данных.
+// Разблокировали — но заполнять всё равно не обязательно.
+consentEl.addEventListener('change', function() {
+  emailEl.disabled = !consentEl.checked;
+  if (!consentEl.checked) {
+    emailEl.value = '';
+    emailEl.classList.remove('error');
+  }
+  updateSubmitState();
+});
 
 function validateEmail() {
-  var ok = emailEl.value.indexOf('@') > -1 && emailEl.value.indexOf('.') > -1;
-  if (!emailEl.value || !ok) {
+  if (!isEmailValid()) {
     emailEl.classList.add('error');
     return false;
   }
@@ -628,6 +653,7 @@ function resetForm() {
   updatePreviews();
   emailEl.value = '';
   emailEl.classList.remove('error');
+  emailEl.disabled = true;
   consentEl.checked = false;
   medicalConsentEl.checked = false;
   categorySelectEl.value = '';
@@ -662,6 +688,12 @@ submitBtn.addEventListener('click', function() {
   submitText.style.display = 'none';
   submitSpinner.classList.add('active');
   submitBtn.disabled = true;
+
+  // Визуальный сигнал, если есть крупные файлы — загрузка может занять время
+  var totalBytes = files.reduce(function(sum, f) { return sum + f.size; }, 0);
+  if (totalBytes > 10 * 1024 * 1024) {
+    showToast('Загружаем файлы, это может занять время…', 'success');
+  }
 
   var formData = new FormData();
   formData.append('type', typeSelectEl.value);
@@ -703,7 +735,9 @@ submitBtn.addEventListener('click', function() {
     var ticketUrl = data && data.url ? data.url : null;
     showThankYou(registerCheck.checked, ticketUrl);
 
-    if (registerCheck.checked) {
+    if (data && data.skipped_files && data.skipped_files.length > 0) {
+      showToast('Не удалось прикрепить: ' + data.skipped_files.join(', '), 'error');
+    } else if (registerCheck.checked) {
       showToast('Тема создана на radar33.ru', 'success');
     } else {
       showToast('Жалоба отправлена анонимно', 'success');
@@ -713,7 +747,7 @@ submitBtn.addEventListener('click', function() {
     submitText.style.display = '';
     submitSpinner.classList.remove('active');
     submitBtn.disabled = false;
-    showToast('Ошибка отправки: ' + err.message, 'error');
+    showToast('Ошибка отправки. Возможно, файл слишком большой (макс. 99 МБ). Попробуйте ещё раз.', 'error');
   });
 });
 
