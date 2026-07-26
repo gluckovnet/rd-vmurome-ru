@@ -247,8 +247,19 @@ body {
     <a href="https://vk.com/evemurom" class="page-subtitle" target="_blank" rel="noopener">vk.com/evemurom</a>
     <div class="card" id="card">
 
+    <div class="field">
+      <label for="type-select">Тип обращения</label>
+      <select id="type-select" style="width:100%;border:1.5px solid var(--gray-300);border-radius:var(--radius);padding:12px 14px;font-size:16px;font-family:inherit;outline:none;background:#fff">
+        <option value="complaint">Жалоба / проблема</option>
+        <option value="news">Новость / позитив (праздник, красивое место)</option>
+        <option value="thanks">Благодарность (человеку, организации)</option>
+        <option value="job">Резюме / предложить своё рабочее место</option>
+        <option value="other">Другое</option>
+      </select>
+    </div>
+
     <div class="textarea-wrap">
-      <label for="issue">Опишите ситуацию</label>
+      <label for="issue" id="issue-label">Опишите ситуацию</label>
       <textarea id="issue" placeholder="Яма на Ленина, 5" maxlength="2000"></textarea>
     </div>
 
@@ -283,12 +294,12 @@ body {
 
     <label class="check-row">
       <input type="checkbox" id="register-radar">
-      <span>Хочу указать свои данные и создать тему на radar33.ru</span>
+      <span id="register-radar-label">Хочу указать свои данные и создать тему на radar33.ru</span>
     </label>
 
     <div class="expandable collapsed" id="expandable-register">
       <div class="expandable-inner">
-        <div class="field">
+        <div class="field" id="category-field">
           <label for="category-select">Категория</label>
           <select id="category-select" style="width:100%;border:1.5px solid var(--gray-300);border-radius:var(--radius);padding:12px 14px;font-size:16px;font-family:inherit;outline:none;background:#fff">
             <option value="">Выберите категорию</option>
@@ -357,6 +368,10 @@ const consentEl = document.getElementById('consent');
 const medicalConsentEl = document.getElementById('medical-consent');
 const expMedicalConsent = document.getElementById('expandable-medical-consent');
 const categorySelectEl = document.getElementById('category-select');
+const typeSelectEl = document.getElementById('type-select');
+const issueLabelEl = document.getElementById('issue-label');
+const categoryFieldEl = document.getElementById('category-field');
+const registerRadarLabelEl = document.getElementById('register-radar-label');
 const phoneEl = document.getElementById('phone');
 const registerCheck = document.getElementById('register-radar');
 const nameEl = document.getElementById('name');
@@ -443,6 +458,57 @@ function updateExpandables() {
 }
 
 registerCheck.addEventListener('change', updateExpandables);
+
+// Тип обращения → меняет подпись textarea, видимость категорий, текст согласия на регистрацию
+var TYPE_CONFIG = {
+  complaint: {
+    issuePlaceholder: 'Яма на Ленина, 5',
+    issueLabel: 'Опишите ситуацию',
+    showCategory: true,
+    registerLabel: 'Хочу указать свои данные и создать тему на radar33.ru'
+  },
+  news: {
+    issuePlaceholder: 'Расскажите новость: что, где, когда',
+    issueLabel: 'Расскажите новость',
+    showCategory: false,
+    registerLabel: 'Хочу указать свои данные для публикации в редакции'
+  },
+  thanks: {
+    issuePlaceholder: 'Кого и за что хотите поблагодарить',
+    issueLabel: 'Кому благодарность',
+    showCategory: false,
+    registerLabel: 'Хочу указать свои данные для публикации в редакции'
+  },
+  job: {
+    issuePlaceholder: 'Расскажите о себе или о вакансии',
+    issueLabel: 'Резюме / рабочее место',
+    showCategory: false,
+    registerLabel: 'Хочу оставить контакты для связи по вакансии'
+  },
+  other: {
+    issuePlaceholder: 'Опишите ваше обращение',
+    issueLabel: 'Опишите обращение',
+    showCategory: false,
+    registerLabel: 'Хочу указать свои данные для публикации в редакции'
+  }
+};
+
+function updateTypeUI() {
+  var cfg = TYPE_CONFIG[typeSelectEl.value] || TYPE_CONFIG.complaint;
+  issueEl.placeholder = cfg.issuePlaceholder;
+  issueLabelEl.textContent = cfg.issueLabel;
+  registerRadarLabelEl.textContent = cfg.registerLabel;
+
+  if (cfg.showCategory) {
+    categoryFieldEl.classList.remove('hidden');
+  } else {
+    categoryFieldEl.classList.add('hidden');
+    categorySelectEl.value = '';
+    updateMedicalConsent();
+  }
+}
+
+typeSelectEl.addEventListener('change', updateTypeUI);
 
 // Medical category → показать доп. согласие на спецкатегорию ПД (ст. 10 152-ФЗ)
 function updateMedicalConsent() {
@@ -538,6 +604,8 @@ function resetForm() {
   consentEl.checked = false;
   medicalConsentEl.checked = false;
   categorySelectEl.value = '';
+  typeSelectEl.value = 'complaint';
+  updateTypeUI();
   phoneEl.value = '';
   registerCheck.checked = false;
   nameEl.value = '';
@@ -568,6 +636,7 @@ submitBtn.addEventListener('click', function() {
   submitBtn.disabled = true;
 
   var formData = new FormData();
+  formData.append('type', typeSelectEl.value);
   formData.append('issue', issueEl.value);
   formData.append('email', emailEl.value);
   formData.append('anonymous', !registerCheck.checked);
@@ -616,6 +685,7 @@ submitBtn.addEventListener('click', function() {
   });
 });
 
+updateTypeUI();
 updateSubmitState();
 </script>
 </body>
