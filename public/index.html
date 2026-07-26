@@ -352,11 +352,11 @@ body {
         </div>
         <div class="field">
           <label for="phone">Телефон</label>
-          <input type="tel" id="phone" placeholder="+7 (999) 999-99-99" maxlength="18">
+          <input type="tel" id="phone" placeholder="+7 (999) 999-99-99" maxlength="18" disabled>
         </div>
         <div class="field">
           <label for="name">Имя</label>
-          <input type="text" id="name" placeholder="Ваше имя">
+          <input type="text" id="name" placeholder="Ваше имя" disabled>
         </div>
       </div>
     </div>
@@ -649,9 +649,13 @@ emailEl.addEventListener('input', function() {
 // Разблокировали — но заполнять всё равно не обязательно.
 consentEl.addEventListener('change', function() {
   emailEl.disabled = !consentEl.checked;
+  phoneEl.disabled = !consentEl.checked;
+  nameEl.disabled = !consentEl.checked;
   if (!consentEl.checked) {
     emailEl.value = '';
     emailEl.classList.remove('error');
+    phoneEl.value = '';
+    nameEl.value = '';
   }
   updateSubmitState();
 });
@@ -727,8 +731,10 @@ function resetForm() {
   typeSelectEl.value = 'complaint';
   updateTypeUI();
   phoneEl.value = '';
+  phoneEl.disabled = true;
   registerCheck.checked = false;
   nameEl.value = '';
+  nameEl.disabled = true;
 
   [expRegister, expMedicalConsent].forEach(function(el) {
     el.classList.add('collapsed');
