@@ -83,6 +83,7 @@ body {
   font-family: inherit; resize: vertical; transition: border-color 0.2s; outline: none;
 }
 .textarea-wrap textarea:focus { border-color: var(--red); }
+.textarea-wrap textarea.error { border-color: var(--red); background: #fef2f2; }
 
 /* Camera */
 .camera-btn {
@@ -283,8 +284,9 @@ body {
     </div>
 
     <div class="textarea-wrap">
-      <label for="issue" id="issue-label">Опишите ситуацию</label>
+      <label for="issue" id="issue-label">Опишите ситуацию <span style="color:var(--red)">*</span></label>
       <textarea id="issue" placeholder="Яма на Ленина, 5" maxlength="2000"></textarea>
+      <div class="field-hint">Опишите обращение хотя бы в нескольких словах</div>
     </div>
 
     <div class="field hidden" id="damage-field">
@@ -465,7 +467,7 @@ function updatePreviews() {
   });
 }
 
-var MAX_FILE_SIZE = 999 * 1024 * 1024; // 999 МБ — согласовано с лимитом сервера
+var MAX_FILE_SIZE = 95 * 1024 * 1024; // 95 МБ — фактический лимит сервера сейчас ~100 МБ (POST Content-Length)
 
 cameraInput.addEventListener('change', function() {
   var incoming = Array.from(cameraInput.files || []);
@@ -475,7 +477,7 @@ cameraInput.addEventListener('change', function() {
   var okFiles = incoming.filter(function(f) { return f.size <= MAX_FILE_SIZE; });
 
   if (tooBig.length > 0) {
-    showToast('Файл слишком большой (макс. 999 МБ): ' + tooBig.map(function(f) { return f.name; }).join(', '), 'error');
+    showToast('Файл слишком большой (сервер принимает до ~95 МБ): ' + tooBig.map(function(f) { return f.name; }).join(', '), 'error');
   }
 
   files = files.concat(okFiles.slice(0, remaining));
@@ -604,11 +606,27 @@ function isEmailValid() {
   return emailEl.value.indexOf('@') > -1 && emailEl.value.indexOf('.') > -1;
 }
 
+// Описание обязательно, минимум несколько слов (не просто пара символов)
+var MIN_ISSUE_WORDS = 3;
+function isIssueValid() {
+  var words = issueEl.value.trim().split(/\s+/).filter(function(w) { return w.length > 0; });
+  return words.length >= MIN_ISSUE_WORDS;
+}
+
 // Submit state
 function updateSubmitState() {
   var medicalOk = categorySelectEl.value !== 'medical' || medicalConsentEl.checked;
-  submitBtn.disabled = !(isEmailValid() && consentEl.checked && medicalOk);
+  submitBtn.disabled = !(isIssueValid() && isEmailValid() && consentEl.checked && medicalOk);
 }
+
+issueEl.addEventListener('input', function() {
+  updateSubmitState();
+  if (issueEl.value && !isIssueValid()) {
+    issueEl.classList.add('error');
+  } else {
+    issueEl.classList.remove('error');
+  }
+});
 
 emailEl.addEventListener('input', function() {
   updateSubmitState();
@@ -794,7 +812,7 @@ submitBtn.addEventListener('click', function() {
     submitSpinner.classList.remove('active');
     submitBtn.disabled = false;
     uploadOverlay.classList.add('hidden');
-    showToast('Ошибка отправки. Возможно, файл слишком большой (макс. 999 МБ). Попробуйте ещё раз.', 'error');
+    showToast('Ошибка отправки. Файл слишком большой для загрузки на сервер (сейчас лимит ~100 МБ). Попробуйте уменьшить видео или прикрепить меньше файлов.', 'error');
   });
 });
 
