@@ -218,6 +218,11 @@ body {
 .thankyou h2 { font-size: 22px; color: var(--gray-900); margin-bottom: 8px; }
 .thankyou .msg { font-size: 14px; color: var(--gray-500); margin-bottom: 8px; line-height: 1.5; }
 .thankyou .link { font-size: 14px; color: var(--red); word-break: break-all; }
+.ticket-number {
+  display: inline-block; margin: 4px auto 8px; padding: 8px 16px;
+  background: var(--gray-100); border-radius: var(--radius);
+  font-size: 15px; font-weight: 700; color: var(--gray-900); letter-spacing: 0.3px;
+}
 .thankyou .back-btn {
   margin-top: 20px; padding: 12px 28px;
   background: var(--gray-100); border: 1px solid var(--gray-300);
@@ -226,6 +231,24 @@ body {
 .thankyou .back-btn:hover { background: var(--gray-200); }
 
 .hidden { display: none !important; }
+
+/* Upload overlay: центр экрана, показывается во время отправки формы */
+.upload-overlay {
+  position: fixed; inset: 0; background: rgba(0,0,0,0.45);
+  display: flex; align-items: center; justify-content: center;
+  z-index: 300;
+}
+.upload-overlay-box {
+  background: #fff; border-radius: var(--radius); padding: 32px 28px;
+  display: flex; flex-direction: column; align-items: center; gap: 16px;
+  max-width: 320px; text-align: center; box-shadow: 0 10px 40px rgba(0,0,0,0.25);
+}
+.upload-spinner {
+  width: 40px; height: 40px; border: 4px solid var(--gray-200);
+  border-top-color: var(--red); border-radius: 50%;
+  animation: spin 0.7s linear infinite;
+}
+.upload-overlay-text { font-size: 15px; font-weight: 600; color: var(--gray-800); }
 
 /* Toast */
 .toast {
@@ -353,10 +376,19 @@ body {
     </div>
     <h2>Готово!</h2>
     <div class="msg" id="thank-msg"></div>
+    <div class="ticket-number hidden" id="ticket-number"></div>
     <div class="link hidden" id="thank-link"></div>
     <button class="back-btn" id="back-btn">Вернуться на главную</button>
   </div>
 </main>
+
+<!-- Оверлей загрузки: показывается по центру экрана во время отправки формы -->
+<div class="upload-overlay hidden" id="upload-overlay">
+  <div class="upload-overlay-box">
+    <div class="upload-spinner"></div>
+    <div class="upload-overlay-text" id="upload-overlay-text">Отправляем обращение…</div>
+  </div>
+</div>
 
 <!-- FOOTER: всегда в конце body, чтобы оставаться снизу и на форме, и на экране "Готово" -->
 <footer class="footer">
@@ -625,10 +657,18 @@ function showToast(text, type) {
 }
 
 // Thank you
-function showThankYou(registered, ticketUrl) {
+function showThankYou(registered, ticketUrl, dealId) {
   formView.classList.add('hidden');
   thankView.classList.remove('hidden');
   window.scrollTo(0, 0);
+
+  var ticketNumberEl = document.getElementById('ticket-number');
+  if (dealId) {
+    ticketNumberEl.textContent = 'Номер обращения: №' + dealId;
+    ticketNumberEl.classList.remove('hidden');
+  } else {
+    ticketNumberEl.classList.add('hidden');
+  }
 
   if (registered) {
     thankMsg.textContent = 'Тема создана! Ваше обращение зарегистрировано на radar33.ru.';
@@ -639,7 +679,7 @@ function showThankYou(registered, ticketUrl) {
       thankLink.classList.add('hidden');
     }
   } else {
-    thankMsg.textContent = 'Жалоба отправлена анонимно. Ответ придёт на указанную почту.';
+    thankMsg.textContent = 'Обращение зарегистрировано в системе. Ответ придёт на указанную почту, если она была указана.';
     thankLink.classList.add('hidden');
   }
 }
@@ -671,6 +711,7 @@ function resetForm() {
 
   footerMode.textContent = 'Анонимно';
   submitText.textContent = 'Отправить анонимно';
+  document.getElementById('ticket-number').classList.add('hidden');
   updateSubmitState();
   thankView.classList.add('hidden');
   formView.classList.remove('hidden');
@@ -689,11 +730,15 @@ submitBtn.addEventListener('click', function() {
   submitSpinner.classList.add('active');
   submitBtn.disabled = true;
 
-  // Визуальный сигнал, если есть крупные файлы — загрузка может занять время
+  // Оверлей по центру экрана на всё время отправки — виден статус,
+  // особенно важно при загрузке крупных файлов (видео и т.п.)
   var totalBytes = files.reduce(function(sum, f) { return sum + f.size; }, 0);
-  if (totalBytes > 10 * 1024 * 1024) {
-    showToast('Загружаем файлы, это может занять время…', 'success');
-  }
+  var uploadOverlay = document.getElementById('upload-overlay');
+  var uploadOverlayText = document.getElementById('upload-overlay-text');
+  uploadOverlayText.textContent = totalBytes > 10 * 1024 * 1024
+    ? 'Загружаем файлы, это может занять время…'
+    : 'Отправляем обращение…';
+  uploadOverlay.classList.remove('hidden');
 
   var formData = new FormData();
   formData.append('type', typeSelectEl.value);
@@ -731,9 +776,10 @@ submitBtn.addEventListener('click', function() {
     submitText.style.display = '';
     submitSpinner.classList.remove('active');
     submitBtn.disabled = false;
+    uploadOverlay.classList.add('hidden');
 
     var ticketUrl = data && data.url ? data.url : null;
-    showThankYou(registerCheck.checked, ticketUrl);
+    showThankYou(registerCheck.checked, ticketUrl, data && data.deal_id);
 
     if (data && data.skipped_files && data.skipped_files.length > 0) {
       showToast('Не удалось прикрепить: ' + data.skipped_files.join(', '), 'error');
@@ -747,6 +793,7 @@ submitBtn.addEventListener('click', function() {
     submitText.style.display = '';
     submitSpinner.classList.remove('active');
     submitBtn.disabled = false;
+    uploadOverlay.classList.add('hidden');
     showToast('Ошибка отправки. Возможно, файл слишком большой (макс. 999 МБ). Попробуйте ещё раз.', 'error');
   });
 });
