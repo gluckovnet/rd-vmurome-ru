@@ -328,6 +328,11 @@ function updateTypeUI() {
     damageFieldEl.classList.add('hidden');
     damageSelectEl.value = '';
   }
+
+  // Обновляем текст кнопки при смене типа (если чекбокс регистрации включён)
+  if (registerCheck.checked) {
+    submitText.textContent = typeSelectEl.value === 'complaint' ? 'Создать тему на radar33.ru' : 'Отправить обращение';
+  }
 }
 
 typeSelectEl.addEventListener('change', updateTypeUI);
