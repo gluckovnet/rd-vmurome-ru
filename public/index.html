@@ -501,11 +501,13 @@ phoneEl.addEventListener('input', function() {
 
 // Expandables: register checkbox → phone + name + categories
 function updateExpandables() {
+  var emailLabel = document.querySelector('label[for="email"]');
   if (registerCheck.checked) {
     expRegister.classList.remove('collapsed');
     expRegister.style.maxHeight = expRegister.scrollHeight + 'px';
     footerMode.textContent = 'Режим регистрации';
     submitText.textContent = 'Создать тему на radar33.ru';
+    emailLabel.innerHTML = 'Email <span style="color:var(--red)">*</span>';
   } else {
     expRegister.classList.add('collapsed');
     expRegister.style.maxHeight = '0px';
@@ -513,6 +515,7 @@ function updateExpandables() {
     nameEl.value = '';
     footerMode.textContent = 'Анонимно';
     submitText.textContent = 'Отправить анонимно';
+    emailLabel.textContent = 'Email (необязательно)';
   }
   updateSubmitState();
 }
@@ -599,9 +602,14 @@ function updateMedicalConsent() {
 categorySelectEl.addEventListener('change', updateMedicalConsent);
 medicalConsentEl.addEventListener('change', updateSubmitState);
 
-// Email необязателен. Если пустой — валиден (пропускаем поле).
-// Если что-то введено — должно быть похоже на настоящий email.
+// Email необязателен при анонимной отправке.
+// Но если юзер отмечает "Хочу указать свои данные" (registerCheck) — email обязателен.
 function isEmailValid() {
+  if (registerCheck.checked) {
+    // Email обязателен при регистрации
+    return emailEl.value.indexOf('@') > -1 && emailEl.value.indexOf('.') > -1;
+  }
+  // Анонимно — email можно не указывать, но если указал, должен быть валидным
   if (!emailEl.value) return true;
   return emailEl.value.indexOf('@') > -1 && emailEl.value.indexOf('.') > -1;
 }
