@@ -67,6 +67,9 @@ body {
   padding: 24px 20px; display: flex; flex-direction: column; gap: 20px;
 }
 
+/* Page title */
+.page-title { font-size: 20px; font-weight: 700; color: var(--gray-900); text-align: center; }
+
 /* Textarea */
 .textarea-wrap { display: flex; flex-direction: column; gap: 6px; }
 .textarea-wrap label { font-size: 14px; font-weight: 600; color: var(--gray-700); }
@@ -236,6 +239,8 @@ body {
 <!-- STATE 1: FORM -->
 <main class="main" id="form-view">
   <div class="card" id="card">
+
+    <h1 class="page-title">Предложка в редакцию</h1>
 
     <div class="textarea-wrap">
       <label for="issue">Опишите ситуацию</label>
