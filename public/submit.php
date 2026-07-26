@@ -267,11 +267,19 @@ if ($dealId !== null && !empty($_FILES['files']['name']) && is_array($_FILES['fi
     }
 }
 
+// --- Собираем HTML-описание для Activity (поле description — rich text,
+// значит переносы строк нужны как <br>, а ссылки на файлы делаем кликабельными) ---
+$descriptionHtmlLines = array_map(
+    fn($l) => htmlspecialchars($l, ENT_QUOTES, 'UTF-8'),
+    $descriptionLines
+);
+
 if (!empty($uploadedFileUrls)) {
-    $descriptionLines[] = '';
-    $descriptionLines[] = 'Вложения (' . count($uploadedFileUrls) . '):';
-    foreach ($uploadedFileUrls as $url) {
-        $descriptionLines[] = $url;
+    $descriptionHtmlLines[] = '';
+    $descriptionHtmlLines[] = 'Вложения (' . count($uploadedFileUrls) . '):';
+    foreach ($uploadedFileUrls as $idx => $url) {
+        $escapedUrl = htmlspecialchars($url, ENT_QUOTES, 'UTF-8');
+        $descriptionHtmlLines[] = '<a href="' . $escapedUrl . '" target="_blank">Файл ' . ($idx + 1) . '</a> — ' . $escapedUrl;
     }
 }
 
@@ -286,7 +294,7 @@ if ($dealId !== null) {
         'title'       => 'Обращение с сайта rd.vmurome.ru',
         'user_id'     => (int)($config['default_user_id'] ?? 5),
         'due_date'    => date('Y-m-d'),
-        'description' => implode("\n", $descriptionLines),
+        'description' => implode('<br>', $descriptionHtmlLines),
         'deals'       => [$dealId],
     ];
     if ($contactId !== null) {
