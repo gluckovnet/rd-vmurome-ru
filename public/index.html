@@ -282,7 +282,7 @@ body {
     </div>
 
     <div class="previews" id="previews"></div>
-    <div class="file-counter hidden" id="file-counter">0/16</div>
+    <div class="file-counter hidden" id="file-counter">0/21</div>
 
     <div class="field">
       <label for="email">Email <span style="color:var(--red)">*</span></label>      
@@ -418,7 +418,7 @@ function updatePreviews() {
   });
   if (files.length > 0) {
     fileCounter.classList.remove('hidden');
-    fileCounter.textContent = files.length + '/16';
+    fileCounter.textContent = files.length + '/21';
   } else {
     fileCounter.classList.add('hidden');
   }
@@ -433,7 +433,7 @@ function updatePreviews() {
 
 cameraInput.addEventListener('change', function() {
   var incoming = Array.from(cameraInput.files || []);
-  var remaining = 16 - files.length;
+  var remaining = 21 - files.length;
   files = files.concat(incoming.slice(0, remaining));
   cameraInput.value = '';
   updatePreviews();
@@ -651,7 +651,7 @@ function resetForm() {
 }
 
 // CRM API endpoint
-var API_URL = '/api/complaints';
+var API_URL = '/submit.php';
 
 // Submit flow
 submitBtn.addEventListener('click', function() {
@@ -682,8 +682,8 @@ submitBtn.addEventListener('click', function() {
     formData.append('medical_consent', medicalConsentEl.checked);
   }
 
-  files.forEach(function(f, i) {
-    formData.append('files[' + i + ']', f);
+  files.forEach(function(f) {
+    formData.append('files[]', f);
   });
 
   fetch(API_URL, {

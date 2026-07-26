@@ -3,3 +3,4 @@ tasks/
 .vscode/
 deploy/
 README.md
+.crm_token
