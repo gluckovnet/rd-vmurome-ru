@@ -275,16 +275,26 @@ if (!empty($uploadedFileUrls)) {
     }
 }
 
-// --- Прикрепляем полное описание (+ ссылки на файлы) как заметку к сделке ---
+// --- Прикрепляем полное описание (+ ссылки на файлы) через Activity ---
+// ВАЖНО: привязка заметки (Note) к сделке через via_resource/via_resource_id
+// оказалась НЕНАДЁЖНОЙ — сделка не всегда получала associations_count > 0
+// (проверено на нескольких реальных сделках). Ресурс Activity с явным
+// массивом deals: [id] при создании привязывается гарантированно
+// (подтверждено многократно), поэтому используем его вместо Note.
 if ($dealId !== null) {
-    $notePayload = [
-        'body'           => implode("\n", $descriptionLines),
-        'via_resource'   => 'deals',
-        'via_resource_id' => $dealId,
+    $activityPayload = [
+        'title'       => 'Обращение с сайта rd.vmurome.ru',
+        'user_id'     => (int)($config['default_user_id'] ?? 5),
+        'due_date'    => date('Y-m-d'),
+        'description' => implode("\n", $descriptionLines),
+        'deals'       => [$dealId],
     ];
-    $noteResult = crmRequest($crmBaseUrl, $crmToken, 'POST', '/api/notes', $notePayload);
-    if ($noteResult === null || $noteResult['status'] < 200 || $noteResult['status'] >= 300) {
-        error_log('rd.vmurome.ru submit.php: note creation failed for deal ' . $dealId . ': ' . ($noteResult['raw'] ?? 'no response'));
+    if ($contactId !== null) {
+        $activityPayload['contacts'] = [$contactId];
+    }
+    $activityResult = crmRequest($crmBaseUrl, $crmToken, 'POST', '/api/activities', $activityPayload);
+    if ($activityResult === null || $activityResult['status'] < 200 || $activityResult['status'] >= 300) {
+        error_log('rd.vmurome.ru submit.php: activity creation failed for deal ' . $dealId . ': ' . ($activityResult['raw'] ?? 'no response'));
         // не блокируем ответ пользователю — сделка уже создана
     }
 }
