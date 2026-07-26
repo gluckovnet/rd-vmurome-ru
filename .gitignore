@@ -1,0 +1,5 @@
+tasks/
+.kiro/
+.vscode/
+deploy/
+README.md
