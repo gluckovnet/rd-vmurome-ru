@@ -263,6 +263,18 @@ body {
       <textarea id="issue" placeholder="Яма на Ленина, 5" maxlength="2000"></textarea>
     </div>
 
+    <div class="field hidden" id="damage-field">
+      <label for="damage-select">Ориентировочная оценка ущерба</label>
+      <select id="damage-select" style="width:100%;border:1.5px solid var(--gray-300);border-radius:var(--radius);padding:12px 14px;font-size:16px;font-family:inherit;outline:none;background:#fff">
+        <option value="">Не оценивал(а)</option>
+        <option value="under_5k">До 5 000 ₽</option>
+        <option value="5k_50k">5 000 – 50 000 ₽</option>
+        <option value="50k_500k">50 000 – 500 000 ₽</option>
+        <option value="over_500k">Более 500 000 ₽</option>
+      </select>
+      <div class="field-hint">Со слов заявителя, не является претензией. Помогает нам приоритизировать обращение.</div>
+    </div>
+
     <div class="camera-btn" id="camera-btn">
       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"/><circle cx="12" cy="13" r="4"/></svg>
       <span>Прикрепить фото/видео</span>
@@ -372,6 +384,8 @@ const typeSelectEl = document.getElementById('type-select');
 const issueLabelEl = document.getElementById('issue-label');
 const categoryFieldEl = document.getElementById('category-field');
 const registerRadarLabelEl = document.getElementById('register-radar-label');
+const damageFieldEl = document.getElementById('damage-field');
+const damageSelectEl = document.getElementById('damage-select');
 const phoneEl = document.getElementById('phone');
 const registerCheck = document.getElementById('register-radar');
 const nameEl = document.getElementById('name');
@@ -465,30 +479,35 @@ var TYPE_CONFIG = {
     issuePlaceholder: 'Яма на Ленина, 5',
     issueLabel: 'Опишите ситуацию',
     showCategory: true,
+    showDamage: true,
     registerLabel: 'Хочу указать свои данные и создать тему на radar33.ru'
   },
   news: {
     issuePlaceholder: 'Расскажите новость: что, где, когда',
     issueLabel: 'Расскажите новость',
     showCategory: false,
+    showDamage: false,
     registerLabel: 'Хочу указать свои данные для публикации в редакции'
   },
   thanks: {
     issuePlaceholder: 'Кого и за что хотите поблагодарить',
     issueLabel: 'Кому благодарность',
     showCategory: false,
+    showDamage: false,
     registerLabel: 'Хочу указать свои данные для публикации в редакции'
   },
   job: {
     issuePlaceholder: 'Расскажите о себе или о вакансии',
     issueLabel: 'Резюме / рабочее место',
     showCategory: false,
+    showDamage: false,
     registerLabel: 'Хочу оставить контакты для связи по вакансии'
   },
   other: {
     issuePlaceholder: 'Опишите ваше обращение',
     issueLabel: 'Опишите обращение',
     showCategory: false,
+    showDamage: false,
     registerLabel: 'Хочу указать свои данные для публикации в редакции'
   }
 };
@@ -505,6 +524,13 @@ function updateTypeUI() {
     categoryFieldEl.classList.add('hidden');
     categorySelectEl.value = '';
     updateMedicalConsent();
+  }
+
+  if (cfg.showDamage) {
+    damageFieldEl.classList.remove('hidden');
+  } else {
+    damageFieldEl.classList.add('hidden');
+    damageSelectEl.value = '';
   }
 }
 
@@ -604,6 +630,7 @@ function resetForm() {
   consentEl.checked = false;
   medicalConsentEl.checked = false;
   categorySelectEl.value = '';
+  damageSelectEl.value = '';
   typeSelectEl.value = 'complaint';
   updateTypeUI();
   phoneEl.value = '';
@@ -640,6 +667,10 @@ submitBtn.addEventListener('click', function() {
   formData.append('issue', issueEl.value);
   formData.append('email', emailEl.value);
   formData.append('anonymous', !registerCheck.checked);
+
+  if (typeSelectEl.value === 'complaint' && damageSelectEl.value) {
+    formData.append('damage_estimate', damageSelectEl.value);
+  }
 
   if (registerCheck.checked) {
     formData.append('category', categorySelectEl.value);
