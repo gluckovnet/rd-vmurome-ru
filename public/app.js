@@ -444,5 +444,18 @@ submitBtn.addEventListener('click', function() {
   });
 });
 
+// Deep-link по hash: rd.vmurome.ru/#abuse → автоматически выбирает тип обращения
+var HASH_TO_TYPE = {
+  '#abuse': 'complaint',
+  '#content': 'news',
+  '#thanks': 'thanks',
+  '#job': 'job',
+  '#addons': 'other'
+};
+var hashType = HASH_TO_TYPE[location.hash];
+if (hashType) {
+  typeSelectEl.value = hashType;
+}
+
 updateTypeUI();
 updateSubmitState();
