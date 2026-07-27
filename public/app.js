@@ -452,10 +452,25 @@ var HASH_TO_TYPE = {
   '#job': 'job',
   '#addons': 'other'
 };
+var TYPE_TO_HASH = {
+  'complaint': '#abuse',
+  'news': '#content',
+  'thanks': '#thanks',
+  'job': '#job',
+  'other': '#addons'
+};
 var hashType = HASH_TO_TYPE[location.hash];
 if (hashType) {
   typeSelectEl.value = hashType;
 }
+
+// При смене типа в селекторе — обновляем hash в адресной строке
+typeSelectEl.addEventListener('change', function() {
+  var newHash = TYPE_TO_HASH[typeSelectEl.value];
+  if (newHash) {
+    history.replaceState(null, '', newHash);
+  }
+});
 
 updateTypeUI();
 updateSubmitState();
