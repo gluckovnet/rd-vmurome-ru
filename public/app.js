@@ -101,7 +101,7 @@ function updateExpandables() {
     expRegister.classList.remove('collapsed');
     expRegister.style.maxHeight = expRegister.scrollHeight + 'px';
     footerMode.textContent = 'Режим регистрации';
-    submitText.textContent = typeSelectEl.value === 'complaint' ? 'Создать тему на radar33.ru' : 'Отправить обращение';
+    submitText.textContent = 'Отправить обращение';
     emailLabel.innerHTML = 'Email <span style="color:var(--red)">*</span>';
   } else {
     expRegister.classList.add('collapsed');
@@ -124,7 +124,7 @@ var TYPE_CONFIG = {
     issueLabel: 'Опишите ситуацию',
     showCategory: true,
     showDamage: true,
-    registerLabel: 'Хочу указать свои данные и создать тему на radar33.ru'
+    registerLabel: 'Хочу указать свои данные для обратной связи'
   },
   news: {
     issuePlaceholder: 'Расскажите новость: что, где, когда',
@@ -179,7 +179,7 @@ function updateTypeUI() {
 
   // Обновляем текст кнопки при смене типа (если чекбокс регистрации включён)
   if (registerCheck.checked) {
-    submitText.textContent = typeSelectEl.value === 'complaint' ? 'Создать тему на radar33.ru' : 'Отправить обращение';
+    submitText.textContent = 'Отправить обращение';
   }
 }
 
@@ -301,7 +301,7 @@ function showThankYou(registered, ticketUrl, dealId) {
   }
 
   if (registered) {
-    thankMsg.textContent = 'Тема создана! Ваше обращение зарегистрировано на radar33.ru.';
+    thankMsg.textContent = 'Обращение зарегистрировано! Ваши данные переданы редакции murom360.ru.';
     if (ticketUrl) {
       thankLink.classList.remove('hidden');
       thankLink.innerHTML = 'Ссылка на тему: <a href="' + ticketUrl + '" style="color:var(--red)">' + ticketUrl + '</a>';
@@ -429,7 +429,7 @@ submitBtn.addEventListener('click', function() {
     if (data && data.skipped_files && data.skipped_files.length > 0) {
       showToast('Не удалось прикрепить: ' + data.skipped_files.join(', '), 'error');
     } else if (registerCheck.checked) {
-      showToast('Тема создана на radar33.ru', 'success');
+      showToast('Обращение отправлено', 'success');
     } else {
       showToast('Обращение отправлено анонимно', 'success');
     }
