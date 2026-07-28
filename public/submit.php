@@ -147,8 +147,8 @@ if (!$anonymous) {
     if ($category !== '') {
         $descriptionLines[] = 'Категория: ' . $category;
     }
-    if ($phoneRaw !== '') {
-        $descriptionLines[] = 'Телефон: ' . $phoneRaw;
+    if ($phone !== '') {
+        $descriptionLines[] = 'Телефон: ' . $phone;
     }
     if ($name !== '') {
         $descriptionLines[] = 'Имя: ' . $name;
@@ -187,8 +187,8 @@ if ($email !== '') {
             'first_name' => $name !== '' ? $name : 'Без имени',
             'email'      => $email,
         ];
-        if ($phoneRaw !== '') {
-            $contactPayload['phones'] = [['number' => $phoneRaw, 'type' => 'mobile']];
+        if ($phone !== '') {
+            $contactPayload['phones'] = [['number' => $phone, 'type' => 'mobile']];
         }
         if (!empty($config['default_user_id'])) {
             $contactPayload['user_id'] = (int)$config['default_user_id'];
