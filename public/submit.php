@@ -188,7 +188,13 @@ if ($email !== '') {
             'email'      => $email,
         ];
         if ($phone !== '') {
-            $contactPayload['phones'] = [['number' => $phone, 'type' => 'mobile']];
+            // Concord сам добавляет +7 префикс к российским номерам,
+            // поэтому убираем ведущую 7, чтобы не было дублирования +7.
+            $phoneForCrm = $phone;
+            if (strlen($phoneForCrm) >= 11 && ($phoneForCrm[0] === '7' || $phoneForCrm[0] === '8')) {
+                $phoneForCrm = substr($phoneForCrm, 1);
+            }
+            $contactPayload['phones'] = [['number' => $phoneForCrm, 'type' => 'mobile']];
         }
         if (!empty($config['default_user_id'])) {
             $contactPayload['user_id'] = (int)$config['default_user_id'];
@@ -196,12 +202,14 @@ if ($email !== '') {
         $created = crmRequest($crmBaseUrl, $crmToken, 'POST', '/api/contacts', $contactPayload);
         if ($created !== null && $created['status'] >= 200 && $created['status'] < 300) {
             $contactId = $created['body']['id'] ?? null;
-        } elseif ($created !== null && $created['status'] === 422 && stripos($created['raw'], 'email') !== false) {
-            // Email уже привязан к контакту/пользователю, недоступному этому
-            // токену по правам видимости Concord (контакт принадлежит другому
-            // сотруднику). Это НЕ ошибка нашего кода — просто у токена нет
-            // доступа к этой записи, поэтому используем сделку без контакта.
-            error_log('rd.vmurome.ru submit.php: email ' . $email . ' already belongs to a contact not visible to this token, deal created without contact link');
+        } elseif ($created !== null && $created['status'] === 422) {
+            if (stripos($created['raw'], 'email') !== false) {
+                error_log('rd.vmurome.ru submit.php: email ' . $email . ' already belongs to invisible contact');
+            } elseif (stripos($created['raw'], 'телефон') !== false || stripos($created['raw'], 'phone') !== false) {
+                error_log('rd.vmurome.ru submit.php: phone ' . $phone . ' already belongs to invisible contact');
+            } else {
+                error_log('rd.vmurome.ru submit.php: contact creation failed (duplicate field): ' . $created['raw']);
+            }
         } else {
             error_log('rd.vmurome.ru submit.php: contact creation failed: ' . ($created['raw'] ?? 'no response'));
         }
